@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(MdCSCppMatrix main.cpp
     matrix.hpp
+    matrixView.hpp
 )
 
 include(GNUInstallDirs)

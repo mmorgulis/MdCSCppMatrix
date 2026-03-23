@@ -7,6 +7,11 @@
 #include <iomanip>
 #include <random>
 #include <cassert>
+#include <span>
+
+#include "MatrixView.hpp"
+
+namespace matrix {
 
 // The type T can only be a number floating-point type
 template <std::floating_point T>
@@ -25,7 +30,7 @@ public:
     Matrix() = delete;
 
     // Quadratic matrix constructor
-    explicit Matrix(int size)
+    explicit Matrix(size_t size)
         : _matrix(size * size, 0.0), _rows(size), _cols(size)
     {
     }
@@ -71,7 +76,7 @@ public:
 
     // For const matrix
     // IMP: it checks the bound only with an assert
-    T operator()(size_t i, size_t j) const {
+    const T& operator()(size_t i, size_t j) const {
         assert(i < _rows && j < _cols && "Matrix indices out of bounds!");
         return _matrix[i * _cols + j];
     }
@@ -90,12 +95,58 @@ public:
     }
 
     // getRow
+    std::span<T> getRow(size_t index) {
+        assert(index < _rows);
+
+        // pointer + size constructor
+        return std::span<T>(
+                _matrix.data() + index * _cols,
+                _cols
+            );
+    }
+
+    // const
+    std::span<const T> getRow(size_t index) const {
+        assert(index < _rows);
+
+        return std::span<const T>(
+            _matrix.data() + index * _cols,
+            _cols
+            );
+    }
 
     // getColumn
+    matrix::MatrixView<T> getColumn(size_t index) {
+        assert(index < _cols);
+
+        return matrix::MatrixView<T>(_matrix.data() + index, _rows, 1, _cols);
+
+    }
+
+    matrix::MatrixView<const T> getColumn(size_t index) const {
+        assert(index < _cols);
+
+        return matrix::MatrixView<T>(_matrix.data() + index, _rows, 1, _cols);
+
+    }
 
     // getBlock
+    matrix::MatrixView<T> getBlock(size_t row_index, size_t col_index, size_t height, size_t width) {
+        assert(row_index + height <= _rows);
+        assert(col_index + width  <= _cols);
 
-    // getSize
+        return matrix::MatrixView<T>(_matrix.data() + row_index * _cols + col_index,
+                             height, width, _cols);
+    }
+
+    matrix::MatrixView<const T> getBlock(size_t row_index, size_t col_index, size_t height, size_t width) const{
+        assert(row_index + height <= _rows);
+        assert(col_index + width  <= _cols);
+
+        return matrix::MatrixView<T>(_matrix.data() + row_index * _cols + col_index,
+                             height, width, _cols);
+    }
+
 
     // operator+
 
@@ -136,6 +187,18 @@ public:
     }
 };
 
+} // namespace matrix
+
+// To print row simply
+template <typename T>
+std::ostream& operator<<(std::ostream& os, std::span<T> s) {
+    os << "[ ";
+    for (const auto& x : s) {
+        os << x << " ";
+    }
+    os << "]";
+    return os;
+}
 
 
 #endif // MATRIX_HPP
