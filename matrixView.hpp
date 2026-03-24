@@ -1,7 +1,8 @@
 #ifndef MATRIXVIEW_HPP
 #define MATRIXVIEW_HPP
+
 #include <concepts>
-#include <memory>
+#include <iomanip>
 
 namespace matrix {
 

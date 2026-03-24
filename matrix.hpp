@@ -149,10 +149,29 @@ public:
 
 
     // operator+
+    Matrix operator+(const Matrix& other) const {
+        if (_cols != other._cols || _rows != other._rows) {
+            throw std::invalid_argument("Matrix dimensions must be the same");
+        }
+
+        Matrix result(_rows, _cols);
+
+        //Without parallelization
+        for (size_t i = 0; i < _matrix.size(); ++i) {
+            result._matrix[i] = _matrix[i] + other._matrix[i];
+        }
+
+
+        return result;
+
+    }
 
     // operator*
 
     // transpose
+    Matrix transpose(Matrix& matrix) {
+
+    }
 
     // inverse
 
