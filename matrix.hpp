@@ -8,13 +8,14 @@
 #include <random>
 #include <cassert>
 #include <span>
+#include <type_traits>
 
 #include "MatrixView.hpp"
 
 namespace matrix {
 
-// The type T can only be a number floating-point type
-template <std::floating_point T>
+template <typename T>
+requires std::is_arithmetic_v<T>
 class Matrix
 {
 private:
@@ -31,13 +32,13 @@ public:
 
     // Quadratic matrix constructor
     explicit Matrix(size_t size)
-        : _matrix(size * size, 0.0), _rows(size), _cols(size)
+        : _matrix(size * size, T{0}), _rows(size), _cols(size)
     {
     }
 
     // Rectangular matrix constructor
-    explicit Matrix(int num_rows, int num_cols)
-        : _matrix(num_rows * num_cols, 0.0), _rows(num_rows), _cols(num_cols)
+    explicit Matrix(size_t num_rows, size_t num_cols)
+        : _matrix(num_rows * num_cols, T{0}), _rows(num_rows), _cols(num_cols)
     {
     }
 
@@ -51,7 +52,7 @@ public:
     }
 
     // Operator=
-    Matrix& operator=(Matrix other) { // Value-Passing
+    Matrix& operator=(Matrix other) noexcept { // Value-Passing
         this->swap(other);
         return *this;
     }
@@ -82,12 +83,17 @@ public:
     }
 
     // Fill the matrix with pseudo-random number
-    void fillMatrix(T min = 0.0, T max = 10.0) {
-        std::uniform_real_distribution<T> dis(min, max);
-        for (auto& x : _matrix) {
-            x = dis(_gen);
+    void fillMatrix(T min = T{0}, T max = T{10}) {
+        if constexpr (std::is_floating_point_v<T>) {
+            std::uniform_real_distribution<T> dis(min, max);
+            for (auto& x : _matrix) x = dis(_gen);
+        } else {
+            std::uniform_int_distribution<T> dis(min, max);
+            for (auto& x : _matrix) x = dis(_gen);
         }
     }
+
+    // Fill the matrix with one value
 
     // size
     std::pair<size_t, size_t> size() const {
@@ -126,7 +132,7 @@ public:
     matrix::MatrixView<const T> getColumn(size_t index) const {
         assert(index < _cols);
 
-        return matrix::MatrixView<T>(_matrix.data() + index, _rows, 1, _cols);
+        return matrix::MatrixView<const T>(_matrix.data() + index, _rows, 1, _cols);
 
     }
 
@@ -143,7 +149,7 @@ public:
         assert(row_index + height <= _rows);
         assert(col_index + width  <= _cols);
 
-        return matrix::MatrixView<T>(_matrix.data() + row_index * _cols + col_index,
+        return matrix::MatrixView<const T>(_matrix.data() + row_index * _cols + col_index,
                              height, width, _cols);
     }
 
@@ -167,10 +173,21 @@ public:
     }
 
     // operator*
+    // simple implementation (no parallelization, no simd
+    // only the localitation trick with transpose)
+    Matrix operator*(const Matrix& other) const {
+
+    }
 
     // transpose
-    Matrix transpose(Matrix& matrix) {
-
+    Matrix transpose() const {
+        Matrix transposed(_cols, _rows); // not really necessary
+        for (size_t i = 0; i < _cols; ++i) {
+            for (size_t j = 0; j < _rows; ++j) {
+                transposed(i, j) = (*this)(j, i);
+            }
+        }
+        return transposed;
     }
 
     // inverse
