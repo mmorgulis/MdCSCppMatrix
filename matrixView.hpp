@@ -1,12 +1,13 @@
 #ifndef MATRIXVIEW_HPP
 #define MATRIXVIEW_HPP
 
-#include <concepts>
 #include <iomanip>
+#include <type_traits>
 
 namespace matrix {
 
-template<std::floating_point T>
+template<typename T>
+requires std::is_arithmetic_v<T>
 class MatrixView {
 private:
     T* _data; // starting_point to read the data

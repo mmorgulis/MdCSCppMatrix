@@ -1,7 +1,7 @@
 #ifndef MATRIX_HPP
 #define MATRIX_HPP
 
-#include <concepts>
+#include <cstring>
 #include <ostream>
 #include <vector>
 #include <iomanip>
@@ -32,12 +32,12 @@ public:
 
     // Quadratic matrix constructor
     explicit Matrix(size_t size)
-        : _matrix(size * size, T{0}), _rows(size), _cols(size)
+        : Matrix(size, size)
     {
     }
 
     // Rectangular matrix constructor
-    explicit Matrix(size_t num_rows, size_t num_cols)
+    Matrix(size_t num_rows, size_t num_cols)
         : _matrix(num_rows * num_cols, T{0}), _rows(num_rows), _cols(num_cols)
     {
     }
@@ -65,6 +65,40 @@ public:
         swap(this->_rows, other->_rows);
     }
 
+    // FACTORY METHODS
+    // identity
+    static Matrix identity(size_t n) {
+        Matrix I(n, n);
+        for (size_t i = 0; i < n; ++i) {
+            I(i, i) = T{1};
+        }
+        return I;
+    }
+
+    static Matrix zeros(size_t rows, size_t cols) {
+        Matrix m(rows, cols);
+        m.fill(T{0});
+        return m;
+    }
+
+    static Matrix ones(size_t rows, size_t cols) {
+        Matrix m(rows, cols);
+        m.fill(T{1});
+        return m;
+    }
+
+    static Matrix random(size_t rows, size_t cols, T min = T{0}, T max = T{10}) {
+        Matrix m(rows, cols);
+        m.fillRandom(min, max);
+        return m;
+    }
+
+    static Matrix zeros(size_t n) { return zeros(n, n); }
+    static Matrix ones(size_t n)  { return ones(n, n); }
+    static Matrix random(size_t n, T min = T{0}, T max = T{10}) {
+        return random(n, n, min, max);
+    }
+
     // Operator() get only one member
     // It returns a reference of the "logic" cell
     // It transforms the 1D vector to a 2D logic
@@ -83,7 +117,7 @@ public:
     }
 
     // Fill the matrix with pseudo-random number
-    void fillMatrix(T min = T{0}, T max = T{10}) {
+    void fillRandom(T min = T{0}, T max = T{10}) {
         if constexpr (std::is_floating_point_v<T>) {
             std::uniform_real_distribution<T> dis(min, max);
             for (auto& x : _matrix) x = dis(_gen);
@@ -94,6 +128,9 @@ public:
     }
 
     // Fill the matrix with one value
+    void fill(const T& value) {
+        std::fill(_matrix.begin(), _matrix.end(), value);
+    }
 
     // size
     std::pair<size_t, size_t> size() const {
@@ -175,8 +212,32 @@ public:
     // operator*
     // simple implementation (no parallelization, no simd
     // only the localitation trick with transpose)
-    Matrix operator*(const Matrix& other) const {
+    template <typename U>
+    auto operator*(const Matrix<U>& other) const {
+        // Choose beetween types
+        using ResultType = std::common_type_t<T, U>;
 
+        if (_cols != other._rows) {
+            throw std::invalid_argument("Invalid matrix dimensions");
+        }
+
+        Matrix<ResultType> result(_rows, other._cols);
+        auto transposed = other.transpose();
+
+        for (size_t i = 0; i < _rows; ++i) {
+            for (size_t j = 0; j < other._cols; ++j) {
+
+                T sum = T{0};
+
+                for (size_t k = 0; k < _cols; ++k) {
+                    sum += (*this)(i, k) * transposed(j, k);
+                }
+
+                result(i, j) = sum;
+            }
+        }
+
+        return result;
     }
 
     // transpose
@@ -191,8 +252,6 @@ public:
     }
 
     // inverse
-
-    // identity
 
     // tril
 

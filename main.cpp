@@ -1,23 +1,25 @@
 #include <iostream>
-#include <chrono>
 #include "matrix.hpp"
+#include <chrono>
 
 
 int main()
 {
-    matrix::Matrix<float> m1(5);
-    matrix::Matrix<float> m2(5);
-    m1.fillMatrix();
-    m2.fillMatrix();
+    auto m1 = matrix::Matrix<float>::random(5);
+    auto m2 = matrix::Matrix<long>::identity(10);
 
-    auto inizio = std::chrono::high_resolution_clock::now();
-    auto m3 = m1 + m2;
-    auto transposed = m1.transpose();
-    auto fine = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> tempo = fine - inizio;
+    matrix::Matrix<double> m3(1000);
+    matrix::Matrix<double> m4(1000);
+
+    m3.fill(2.45);
+    m4.fill(4.55);
+
+    auto start = std::chrono::high_resolution_clock::now();
+    auto m5 = m3 * m4;
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> tempo = end - start;
     std::cout << "Tempo impiegato: " << tempo.count() << " ms" << std::endl;
-    std::cout << m1 << std::endl;
-    std::cout << transposed << std::endl;
+
 
     return 0;
 }
