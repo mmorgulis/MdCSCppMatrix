@@ -104,14 +104,14 @@ public:
     // It transforms the 1D vector to a 2D logic
     // matrix, by indexing
     // IMP: it checks the bound only with an assert
-    T& operator()(size_t i, size_t j) {
+    T& operator()(size_t i, size_t j) noexcept {
         assert(i < _rows && j < _cols && "Matrix indices out of bounds!");
         return _matrix[i * _cols + j];
     }
 
     // For const matrix
     // IMP: it checks the bound only with an assert
-    const T& operator()(size_t i, size_t j) const {
+    const T& operator()(size_t i, size_t j) const noexcept {
         assert(i < _rows && j < _cols && "Matrix indices out of bounds!");
         return _matrix[i * _cols + j];
     }
@@ -133,12 +133,12 @@ public:
     }
 
     // size
-    std::pair<size_t, size_t> size() const {
+    std::pair<size_t, size_t> size() const noexcept {
         return {_rows, _cols};
     }
 
     // getRow
-    std::span<T> getRow(size_t index) {
+    std::span<T> getRow(size_t index) noexcept {
         assert(index < _rows);
 
         // pointer + size constructor
@@ -149,7 +149,7 @@ public:
     }
 
     // const
-    std::span<const T> getRow(size_t index) const {
+    std::span<const T> getRow(size_t index) const noexcept {
         assert(index < _rows);
 
         return std::span<const T>(
@@ -159,14 +159,14 @@ public:
     }
 
     // getColumn
-    matrix::MatrixView<T> getColumn(size_t index) {
+    matrix::MatrixView<T> getColumn(size_t index) noexcept {
         assert(index < _cols);
 
         return matrix::MatrixView<T>(_matrix.data() + index, _rows, 1, _cols);
 
     }
 
-    matrix::MatrixView<const T> getColumn(size_t index) const {
+    matrix::MatrixView<const T> getColumn(size_t index) const noexcept {
         assert(index < _cols);
 
         return matrix::MatrixView<const T>(_matrix.data() + index, _rows, 1, _cols);
@@ -174,7 +174,7 @@ public:
     }
 
     // getBlock
-    matrix::MatrixView<T> getBlock(size_t row_index, size_t col_index, size_t height, size_t width) {
+    matrix::MatrixView<T> getBlock(size_t row_index, size_t col_index, size_t height, size_t width) noexcept {
         assert(row_index + height <= _rows);
         assert(col_index + width  <= _cols);
 
@@ -182,7 +182,7 @@ public:
                              height, width, _cols);
     }
 
-    matrix::MatrixView<const T> getBlock(size_t row_index, size_t col_index, size_t height, size_t width) const{
+    matrix::MatrixView<const T> getBlock(size_t row_index, size_t col_index, size_t height, size_t width) const noexcept {
         assert(row_index + height <= _rows);
         assert(col_index + width  <= _cols);
 
@@ -241,7 +241,7 @@ public:
     }
 
     // transpose
-    Matrix transpose() const {
+    Matrix transpose() const noexcept {
         Matrix transposed(_cols, _rows); // not really necessary
         for (size_t i = 0; i < _cols; ++i) {
             for (size_t j = 0; j < _rows; ++j) {
@@ -251,11 +251,42 @@ public:
         return transposed;
     }
 
-    // inverse
+    /** The function returns the upper
+     *  triangular of the matrix passed
+     *  by this
+     **/
+    Matrix triu() const noexcept {
+        // For every row
+        Matrix result(*this);
+        for (size_t i = 0; i < result._rows; ++i) {
+            size_t limit = std::min(i, result._cols);
+            std::fill(result._matrix.begin() + (i * result._cols),
+                      result._matrix.begin() + (i * result._cols) + limit,
+                      T{0});
+        }
+        return result;
+    }
 
-    // tril
+    /** The function returns the lower
+     *  triangular of the matrix passed
+     *  by this
+     **/
+    Matrix tril() const noexcept {
+        Matrix result(*this);
 
-    // triu
+        for (size_t i = 0; i < result._rows; ++i) {
+            if (i + 1 < result._cols) {
+                std::fill(result._matrix.begin() + (i * result._cols) + (i + 1),
+                          result._matrix.begin() + (i * result._cols) + result._cols,
+                          T{0});
+            }
+        }
+
+        return result;
+    }
+
+    // INVERSE
+
 
     // Operator << directly inside the class
     friend std::ostream& operator<<(std::ostream& os, const Matrix<T>& matrix) {
