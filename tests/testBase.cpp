@@ -5,7 +5,6 @@
 int main () {
     // Constructor init
     matrix::Matrix<double> mD(7, 4);
-    matrix::Matrix<double> mD1(mD);
     matrix::Matrix<int> mI(3);
     matrix::Matrix<long long> mL(6, 5);
 
@@ -21,10 +20,13 @@ int main () {
     mI(2,2) = 1;
     assert(mI == mI1);
     assert(ones != zeros);
-    assert(mD.isApprox(mD1));
+
 
     // fill
     mD.fillRandom();
+    matrix::Matrix<double> mD1(mD);
+    assert(mD.isApprox(mD1));
+
     mL.fill(2);
 
     // stampa

@@ -29,6 +29,16 @@ int main()
     std::cout << std::numeric_limits<long double>::epsilon() << std::endl;
     std::cout << std::numeric_limits<int>::max() << std::endl;
     std::cout << sizeof(long double) << std::endl;
+    double i = 0.3;
+    double j = 0.2;
+    j += 0.1;
+    if (i == j ){
+        std::cout << "if" << std::endl;
+    } else if (i - j < std::numeric_limits<double>::epsilon()) {
+        std::cout << "elseif: " << std::numeric_limits<double>::epsilon() << std::endl;
+    } else {
+        std::cout << "else" << std::endl;
+    }
 
 
     return 0;
