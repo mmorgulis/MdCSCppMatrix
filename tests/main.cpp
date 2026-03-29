@@ -26,6 +26,10 @@ int main()
     // std::chrono::duration<double, std::milli> tempo = end - start;
     // std::cout << "Tempo impiegato: " << tempo.count() << " ms" << std::endl;
 
+    std::cout << std::numeric_limits<long double>::epsilon() << std::endl;
+    std::cout << std::numeric_limits<int>::max() << std::endl;
+    std::cout << sizeof(long double) << std::endl;
+
 
     return 0;
 }

@@ -60,9 +60,9 @@ public:
     // Swap function
     void swap(Matrix& other) noexcept {
         using std::swap;
-        swap(this->_matrix, other->_matrix);
-        swap(this->_cols, other->_cols);
-        swap(this->_rows, other->_rows);
+        swap(this->_matrix, other._matrix);
+        swap(this->_cols, other._cols);
+        swap(this->_rows, other._rows);
     }
 
     // FACTORY METHODS
@@ -199,29 +199,24 @@ public:
 
         Matrix result(_rows, _cols);
 
-        //Without parallelization
+        // Without parallelization
         for (size_t i = 0; i < _matrix.size(); ++i) {
             result._matrix[i] = _matrix[i] + other._matrix[i];
         }
 
-
         return result;
-
     }
 
     // operator*
     // simple implementation (no parallelization, no simd
     // only the localitation trick with transpose)
-    template <typename U>
-    auto operator*(const Matrix<U>& other) const {
-        // Choose beetween types
-        using ResultType = std::common_type_t<T, U>;
+    Matrix operator*(const Matrix& other) const {
 
         if (_cols != other._rows) {
             throw std::invalid_argument("Invalid matrix dimensions");
         }
 
-        Matrix<ResultType> result(_rows, other._cols);
+        Matrix result(_rows, other._cols);
         auto transposed = other.transpose();
 
         for (size_t i = 0; i < _rows; ++i) {
@@ -238,6 +233,153 @@ public:
         }
 
         return result;
+    }
+
+    // operator-
+    Matrix operator-(const Matrix &other) const {
+        if (_cols != other._cols || _rows != other._rows) {
+            throw std::invalid_argument("Matrix dimensions must be the same");
+        }
+
+        Matrix result(_rows, _cols);
+
+        // Without parallelization
+        for (size_t i = 0; i < _matrix.size(); ++i) {
+            result._matrix[i] = _matrix[i] - other._matrix[i];
+        }
+
+        return result;
+    }
+
+    // prefix - operator
+    Matrix operator-() const {
+        Matrix result(_rows, _cols);
+
+        for (size_t i = 0; i < _matrix.size(); ++i) {
+            result._matrix[i] = -_matrix[i];
+        }
+
+        return result;
+    }
+
+    // operator * scalar (Matrix * scalar)
+    Matrix operator*(T scalar) const {
+        Matrix result(*this);
+
+        for (auto& x : result._matrix) {
+            x *= scalar;
+        }
+
+        return result;
+    }
+
+    // operator *= scalar (Matrix * scalar)
+    Matrix& operator*=(T scalar) {
+        for (auto& x : _matrix) {
+            x *= scalar;
+        }
+        return *this;
+    }
+
+    // operator +=
+    Matrix& operator+=(const Matrix& other) {
+
+        if (_cols != other._cols || _rows != other._rows) {
+            throw std::invalid_argument("Matrix dimensions must be the same");
+        }
+
+        for (size_t i = 0; i < _matrix.size(); ++i) {
+            _matrix[i] += other._matrix[i];
+        }
+
+        return *this;
+    }
+
+    // operator += with scalar
+    Matrix& operator+=(const T& scalar) {
+        for (auto& x : _matrix) {
+            x += scalar;
+        }
+        return *this;
+    }
+
+    // operator +=
+    Matrix& operator-=(Matrix& other) {
+        if (_cols != other._cols || _rows != other._rows) {
+            throw std::invalid_argument("Matrix dimensions must be the same");
+        }
+
+        for (size_t i = 0; i < _matrix.size(); ++i) {
+            _matrix[i] -= other._matrix[i];
+        }
+
+        return *this;
+    }
+
+    // operator -= with scalar
+    Matrix& operator-=(const T& scalar) {
+        for (auto& x : _matrix) {
+            x -= scalar;
+        }
+        return *this;
+    }
+
+    friend Matrix operator*(T scalar, const Matrix& m) {
+        return m * scalar;
+    }
+
+    // operator==
+    bool operator==(const Matrix& other) const {
+
+        if (this == &other) return true;
+
+        if (_cols != other._cols || _rows != other._rows) {
+            return false;
+        }
+
+        for (size_t i = 0; i < _matrix.size(); ++i) {
+            if (_matrix[i] != other._matrix[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    bool operator!=(const Matrix& other) const {
+        return !(*this == other);
+    }
+
+    bool isApprox(const Matrix& other,
+                  T eps = std::numeric_limits<T>::epsilon() * 100) const {
+
+        if (this == &other) return true;
+
+        if (_rows != other._rows || _cols != other._cols) {
+            return false;
+        }
+
+        for (size_t i = 0; i < _matrix.size(); ++i) {
+            const T a = _matrix[i];
+            const T b = other._matrix[i];
+
+            if constexpr (std::is_floating_point_v<T>) {
+
+                T diff = std::abs(a - b);
+                T norm = std::max(std::max(std::abs(a), std::abs(b)), T{1});
+
+                if (diff > eps * norm) {
+                    return false;
+                }
+
+            } else {
+                if (a != b) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     // transpose
@@ -284,6 +426,8 @@ public:
 
         return result;
     }
+
+    // DETERMINANT
 
     // INVERSE
 
