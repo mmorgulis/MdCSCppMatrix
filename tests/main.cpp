@@ -7,6 +7,9 @@ int main()
 {
     auto m1 = matrix::Matrix<float>::random(5);
     auto m2 = matrix::Matrix<long>::identity(10);
+    auto row = m2.getRow(1);
+    row[3] = 8888;
+    std::cout << m2 << std::endl;
 
     auto m3 = m1.triu();
     auto m4 = m1.tril();

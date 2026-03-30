@@ -159,6 +159,16 @@ public:
             );
     }
 
+    // swapRows
+    void swapRows(size_t i, size_t j) {
+        if (i == j) return;
+
+        auto r1 = getRow(i);
+        auto r2 = getRow(j);
+
+        std::swap_ranges(r1.begin(), r1.end(), r2.begin());
+    }
+
     // getColumn
     matrix::MatrixView<T> getColumn(size_t index) noexcept {
         assert(index < _cols);
@@ -443,39 +453,94 @@ public:
         return norm;
     }
 
-    /** LU Decomposition, it computes the decomposition of
-     *  a matrix A in 2 matrix L (lt) and U (ut). The formula
-     *  used is PA = LU, where P is the matrix of the permutation;
-     *  Note: The matrix must have det(A) != 0; The function need
-     *  the matrix L and U, and they will be filled during the function,
-     *  they are needed to be of the same dimension of A.
-     *
-     *  @param Matrix& A: the reference of the matrix that will be decomposed;
-     *  @param Matrix& L: the reference of the Lower-Triangular matrix
-     *  that will be found in the function;
-     *  @param Matrix& U: the reference of the Upper-Triangular matrix
-     *  that will be found in the function;
-     *
-     *  @throws std::invalid_argument if the matrix in the params has
-     *  not the same size
-     *
-     *  @returns Matrix P of permutation
-     *
-     */
-    Matrix LUDecomposition(Matrix& A, Matrix& L, Matrix& U) {
+    /**
+    * @brief Performs LU decomposition with partial pivoting.
+    *
+    * This function computes the LU decomposition of a square matrix A
+    * such that:
+    *
+    * ```
+       P * A = L * U
+      ```
+    *
+    * where:
+    * * P is a permutation matrix,
+    * * L is a lower triangular matrix with unit diagonal,
+    * * U is an upper triangular matrix.
+    *
+    * The decomposition is performed using Gaussian elimination with
+    * partial pivoting for numerical stability.
+    *
+    * @note The input matrix must be square.
+    * @note The matrices L and U must have the same dimensions as A.
+    * @note The matrix A must be non-singular (det(A) != 0) for a valid decomposition.
+    *
+    * @param A Reference to the input matrix to be decomposed.
+    *
+    * @throws std::invalid_argument if the input matrix is not square
+    * ```
+          or if L and U do not match the dimensions of A.
+      ```
+    *
+    * @return A tuple containing:
+    *           the permutation matrix P;
+    *           the L lower triangular matrix;
+    *           the U the upper triangular matrix:
+  */
+
+    std::tuple<Matrix<T>, Matrix<T>, Matrix<T>>
+    LUDecomposition(const Matrix<T>& A) {
         // Starting condition
-        assert((A.size() == L.size() && A.size() == U.size()) && "Size mismatch");
+        assert((A.size().first == A.size().second) && "Matrix must be square");
 
-        // First initialization
-        U = A;
-        L.fill(T{0});
-        Matrix<T> P = matrix::Matrix::identity(A._cols);
+        size_t n = A._rows;
 
-        for(size_t i = 0; i < A.size(); ++i) {
+        Matrix<T> L(n,n);
+        Matrix<T> U = A;
+        Matrix<T> P = Matrix<T>::identity(n);
 
+        for (size_t k = 0; k < n; ++k) {
+            // pivot
+            size_t pivot = k;
+            T max = std::abs(U(k,k));
+
+            for (size_t i = k+1; i < n; ++i) {
+                if (std::abs(U(i,k)) > max) {
+                    max = std::abs(U(i,k));
+                    pivot = i;
+                }
+            }
+
+            // Checks zeros for safety
+            const T eps = static_cast<T>(1e-12);
+            if (max < eps) {
+                throw std::runtime_error("Matrix is numerically singular");
+            }
+
+            // swap rows
+            if (pivot != k) {
+                U.swapRows(k, pivot);
+                P.swapRows(k, pivot);
+
+                for (size_t j = 0; j < k; ++j)
+                    std::swap(L(k,j), L(pivot,j));
+            }
+
+            // gauss elimination
+            for (size_t i = k+1; i < n; ++i) {
+                T m = U(i,k) / U(k,k);
+                L(i,k) = m;
+
+                for (size_t j = k; j < n; ++j) {
+                    U(i,j) -= m * U(k,j);
+                }
+            }
+
+            L(k,k) = 1;
         }
-    }
 
+        return {L, U, P};
+    }
 
 
     // DETERMINANT
