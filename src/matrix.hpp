@@ -9,6 +9,7 @@
 #include <cassert>
 #include <span>
 #include <type_traits>
+#include <cmath>
 
 #include "MatrixView.hpp"
 
@@ -427,10 +428,61 @@ public:
         return result;
     }
 
+    // NORM
+    double norm() const {
+        double norm = squaredNorm();
+        return std::sqrt(norm);
+    }
+
+    double squaredNorm() const {
+        double norm = 0;
+        for (const auto& x : _matrix) {
+            // To avoid overflow
+            norm += static_cast<double>(x) * static_cast<double>(x);
+        }
+        return norm;
+    }
+
+    /** LU Decomposition, it computes the decomposition of
+     *  a matrix A in 2 matrix L (lt) and U (ut). The formula
+     *  used is PA = LU, where P is the matrix of the permutation;
+     *  Note: The matrix must have det(A) != 0; The function need
+     *  the matrix L and U, and they will be filled during the function,
+     *  they are needed to be of the same dimension of A.
+     *
+     *  @param Matrix& A: the reference of the matrix that will be decomposed;
+     *  @param Matrix& L: the reference of the Lower-Triangular matrix
+     *  that will be found in the function;
+     *  @param Matrix& U: the reference of the Upper-Triangular matrix
+     *  that will be found in the function;
+     *
+     *  @throws std::invalid_argument if the matrix in the params has
+     *  not the same size
+     *
+     *  @returns Matrix P of permutation
+     *
+     */
+    Matrix LUDecomposition(Matrix& A, Matrix& L, Matrix& U) {
+        // Starting condition
+        assert((A.size() == L.size() && A.size() == U.size()) && "Size mismatch");
+
+        // First initialization
+        U = A;
+        L.fill(T{0});
+        Matrix<T> P = matrix::Matrix::identity(A._cols);
+
+        for(size_t i = 0; i < A.size(); ++i) {
+
+        }
+    }
+
+
+
     // DETERMINANT
 
-    // INVERSE
 
+
+    // INVERSE
 
     // Operator << directly inside the class
     friend std::ostream& operator<<(std::ostream& os, const Matrix<T>& matrix) {
