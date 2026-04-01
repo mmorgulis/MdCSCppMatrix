@@ -488,7 +488,7 @@ public:
     *           the U the upper triangular matrix:
   */
 
-    std::tuple<Matrix<T>, Matrix<T>, Matrix<T>>
+    static std::tuple<Matrix<T>, Matrix<T>, Matrix<T>>
     LUDecomposition(const Matrix<T>& A) {
         // Starting condition
         assert((A.size().first == A.size().second) && "Matrix must be square");
@@ -541,6 +541,52 @@ public:
 
         return {L, U, P};
     }
+
+    // POWER ITERATION (METODO DELLE POTENZE)
+    /**
+     * @brief It computes an approximation of the
+     * most dominant eigen value and the corrispective eigenvetor.
+     *
+     * Must begin with an initial guess q^0 \in R^n tc ||q^0||_2 = 1
+     *
+    */
+    static std::pair<double, Matrix<T>> powerIteration(const Matrix& A) {
+        assert(A._rows == A._cols && "Matrix must be square");
+
+        size_t n = A._rows;
+        size_t max_iter = 1000;
+        double tol = 1e-10;
+
+        Matrix<T> q(n, 1);
+        q.fillRandom();
+        q *= (1.0 / q.norm());
+
+        double lambda_old = 0.0;
+
+        for (size_t iter = 0; iter < max_iter; ++iter) {
+            Matrix<T> z = A * q;
+
+            double norm_z = z.norm();
+            q *= 0; // reset
+            for (size_t i = 0; i < n; ++i)
+                q(i,0) = z(i,0) / norm_z;
+
+            // Rayleigh quotient
+            Matrix<T> qt = q.transpose();
+            double lambda = (qt * A * q)(0,0); // get the only element of the 1x1
+
+            if (std::abs(lambda - lambda_old) < tol)
+                return {lambda, q};
+
+            lambda_old = lambda;
+        }
+
+        return {lambda_old, q};
+    }
+
+    // InversePowerIteration
+
+
 
 
     // DETERMINANT
